@@ -42,27 +42,10 @@ namespace LegacyApp
 
             var user = CreateUser(client, dateOfBirth, email, firstName, lastName);
 
-            if (client.Type == "VeryImportantClient")
-            {
-                user.HasCreditLimit = false;
-            }
-            else if (client.Type == "ImportantClient")
-            {
-                int creditLimit = _creditLimitService.GetClientCreditLimit(user.LastName, user.DateOfBirth);
-                creditLimit = creditLimit * 2;
-                user.CreditLimit = creditLimit;
-            }
-            else
-            {
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditService())
-                {
-                    int creditLimit = userCreditService.GetCreditLimit(user.LastName, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
-                }
-            }
+            SetClientCreditLimits(user, client);
 
-            if (user.HasCreditLimit && user.CreditLimit < 500)
+            bool isCreditLimitBelowThreshol = ValidateCreditLimitBelowThreshold(user);
+            if (!isCreditLimitBelowThreshol)
             {
                 return false;
             }
@@ -119,6 +102,36 @@ namespace LegacyApp
                 FirstName = firstName,
                 LastName = lastName
             };
+        }
+
+        public void SetClientCreditLimits(User user, Client client)
+        {
+            
+            if (client.Type == "VeryImportantClient")
+            {
+                user.HasCreditLimit = false;
+            }
+            else if (client.Type == "ImportantClient")
+            {
+                int creditLimit = _creditLimitService.GetClientCreditLimit(user.LastName, user.DateOfBirth);
+                creditLimit = creditLimit * 2;
+                user.CreditLimit = creditLimit;
+            }
+            else
+            {
+                user.HasCreditLimit = true;
+                int creditLimit = _creditLimitService.GetClientCreditLimit(user.LastName, user.DateOfBirth);
+                user.CreditLimit = creditLimit;
+            }
+        }
+        public bool ValidateCreditLimitBelowThreshold(User user)
+        {
+            if (user.HasCreditLimit && user.CreditLimit < 500)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
     
