@@ -5,6 +5,19 @@ namespace LegacyApp
 {
     public class UserService
     {
+        private IClientRepository _clientRepository;
+        private ICreditLimitService _creditLimitService;
+
+        public UserService()
+        {
+            _clientRepository = new ClientRepository();
+            _creditLimitService = new UserCreditService();
+        }
+        public UserService(IClientRepository clientRepository, ICreditLimitService creditLimitService)
+        {
+            _clientRepository = clientRepository;
+            _creditLimitService = creditLimitService;
+        }
         public bool AddUser(string firstName, string lastName, string email, DateTime dateOfBirth, int clientId)
         {
             var isValidData = ValidateData(firstName, lastName);
@@ -25,17 +38,9 @@ namespace LegacyApp
                 return false;
             }
 
-            var clientRepository = new ClientRepository();
-            var client = clientRepository.GetById(clientId);
+            var client = _clientRepository.GetClientById(clientId);
 
-            var user = new User
-            {
-                Client = client,
-                DateOfBirth = dateOfBirth,
-                EmailAddress = email,
-                FirstName = firstName,
-                LastName = lastName
-            };
+            var user = CreateUser(client, dateOfBirth, email, firstName, lastName);
 
             if (client.Type == "VeryImportantClient")
             {
@@ -43,12 +48,9 @@ namespace LegacyApp
             }
             else if (client.Type == "ImportantClient")
             {
-                using (var userCreditService = new UserCreditService())
-                {
-                    int creditLimit = userCreditService.GetCreditLimit(user.LastName, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
-                }
+                int creditLimit = _creditLimitService.GetClientCreditLimit(user.LastName, user.DateOfBirth);
+                creditLimit = creditLimit * 2;
+                user.CreditLimit = creditLimit;
             }
             else
             {
@@ -105,8 +107,18 @@ namespace LegacyApp
             {
                 return true;
             }
+        }
 
-            
+        public User CreateUser(Object client, DateTime birthdate, string email, string firstName, string lastName)
+        {
+            return new User()
+            {
+                Client = client,
+                DateOfBirth = birthdate,
+                EmailAddress = email,
+                FirstName = firstName,
+                LastName = lastName
+            };
         }
     }
     
