@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.SymbolStore;
 
 namespace LegacyApp
 {
@@ -6,21 +7,20 @@ namespace LegacyApp
     {
         public bool AddUser(string firstName, string lastName, string email, DateTime dateOfBirth, int clientId)
         {
-            if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
+            var isValidData = ValidateData(firstName, lastName);
+            if (!isValidData)
             {
                 return false;
             }
 
-            if (!email.Contains("@") && !email.Contains("."))
+            var isValidDEmail = ValidateEmail(email);
+            if (!isValidDEmail)
             {
                 return false;
             }
-
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
-
-            if (age < 21)
+            
+            var isValidAge = ValidateAge(dateOfBirth);
+            if (!isValidAge)
             {
                 return false;
             }
@@ -68,5 +68,46 @@ namespace LegacyApp
             UserDataAccess.AddUser(user);
             return true;
         }
+
+        public Boolean ValidateData(string firstName, string lastName)
+        {
+            if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public Boolean ValidateEmail(string email)
+        {
+            if (!email.Contains("@") && !email.Contains("."))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public Boolean ValidateAge(DateTime dateOfBirth)
+        {
+            var now = DateTime.Now;
+            int age = now.Year - dateOfBirth.Year;
+            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
+
+            if (age < 21)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+
+            
+        }
     }
+    
 }
